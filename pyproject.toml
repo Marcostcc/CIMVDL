@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "CIM-VDL"
+version = "0.1.0"
+description = "Análise dos dados de mobilidade"
+authors = ["Marcos Torres Codeço Coelho marcostorrescc@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pandas = "^2.2.0"
+duckdb = "^0.10.0"
+jupyterlab = "^4.1.2"
+streamlit = "^1.31.1"
+geopandas = "^0.14.3"
+matplotlib = "^3.8.3"
+holidays = "^0.43"
+altair = "^5.2.0"
+plotly-express = "^0.4.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

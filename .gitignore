@@ -1,0 +1,8 @@
+.idea
+.ipynb_checkpoints
+.venv
+Rawdata
+*csv
+*.gpkg
+*.duckdb
+*.json
