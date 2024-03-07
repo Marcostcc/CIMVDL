@@ -1,8 +1,12 @@
 import streamlit as st
 import pandas as pd
 import duckdb as duck
-import altair as alt
 import geopandas as gpd
+import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
+from matplotlib.patheffects import withStroke
+#import altair as alt
+#import geopandas as gpd
 
 # Connect to the database
 with duck.connect('CIM_VDL.duckdb') as cursor:
@@ -43,27 +47,107 @@ def read_gpkg(gpkg_path, layer_name):
 #######################################################################  QUEM DORMIU  #########################################################################################
 
 # Titulo da pagina
-st.title('Quem Dormiu em' + ' ' + select1)
+st.title('Total de estadias (em pessoa-dias) em' + ' ' + select1)
 
-# Query para obter os dados
+# A1. Query para obter os dados INTERNACIONAIS
 with duck.connect('CIM_VDL.duckdb') as cursor:
-    dfq = pd.DataFrame(data=cursor.execute("select * from quem_dormiu_nac_concelho").fetchall(), columns=["pais_origem", "geo_area_nome", "concelho_residencia","dormidas_totais"])
+    quem_dormiu_int_concelho = pd.DataFrame(data=cursor.execute("select * from quem_dormiu_int_concelho").fetchall(), columns=["pais_origem", "geo_area_nome","dormidas_totais"])
 
-gdf = read_gpkg('C:/Users/marco/Documents/MEGA/CIMVDL/CIM-VDL/geopackages/portugal_con.gpkg', 'portugal_con')
+# A1. rename 'Guadeloupe and Martinique and French Guiana' in pais_origem to 'France'
+quem_dormiu_int_concelho['pais_origem'] = quem_dormiu_int_concelho['pais_origem'].replace('Guadeloupe and Martinique and French Guiana', 'France')
 
-#merge dos dados com o geodataframe
-gdf = gdf.merge(dfq, left_on='Concelho', right_on='concelho_residencia', how='left')
-gdf = gdf.to_crs(epsg=4326)
+# A1. open geojson file
+world = read_gpkg('C:/Users/marco/Documents/MEGA/CIMVDL/CIM-VDL/geopackages/mundo_simples.gpkg', 'mundo_simples')
+
+# A1. merge dos dados com o geodataframe
+world_gdf = world.merge(quem_dormiu_int_concelho, left_on='NAME_PT', right_on='pais_origem', how='left')
+#-----------------------------------------------------------------------------#
+
+# A2. Query para obter os dados NACIONAIS
+with duck.connect('CIM_VDL.duckdb') as cursor:
+    quem_dormiu_nac_concelho = pd.DataFrame(data=cursor.execute("select * from quem_dormiu_nac_concelho").fetchall(), columns=["pais_origem", "geo_area_nome", "concelho_residencia","dormidas_totais"])
+
+# A2. geodataframe de PORTUGAL
+portugal_con = read_gpkg('C:/Users/marco/Documents/MEGA/CIMVDL/CIM-VDL/geopackages/simplified_portugal.gpkg', 'simplified')
+
+# A2. merge dos dados com o geodataframe
+portugal_gdf = portugal_con.merge(quem_dormiu_nac_concelho, left_on='Concelho', right_on='concelho_residencia', how='left')
+
+#-----------------------------------------------------------------------------#
+
+# A3. Query para obter os dados VISEU DÃO LAFÕES
+with duck.connect('CIM_VDL.duckdb') as cursor:
+    quem_dormiu_reg_concelho = pd.DataFrame(data=cursor.execute("select * from quem_dormiu_reg_concelho").fetchall(), columns=["pais_origem", "geo_area_nome", "concelho_residencia","dormidas_totais"])
+
+# A3. geodataframe de VDL
+vdl_con = read_gpkg('C:/Users/marco/Documents/MEGA/CIMVDL/CIM-VDL/geopackages/vdl_con.gpkg', 'vdl_con')
+
+# A3. merge dos dados com o geodataframe
+vdl_gdf = vdl_con.merge(quem_dormiu_reg_concelho, left_on='Concelho', right_on='concelho_residencia', how='left')
+
 
 # criar cloropleth map com os dados
 a1, a2, a3 = st.columns((4,3,3))
 
+# with a1 plot the map for the world with the selected concelho
 with a1:
-    st.write('Visitantes Internacionais')
-    chart = alt.Chart(gdf[gdf.geo_area_nome == select1]).mark_geoshape().encode(
-        color='dormidas_totais:Q'
-    ).properties(
-        width=400,
-        height=400
-    )
-    st.altair_chart(chart)
+    # add discriptive
+    #st.write('Residentes Internacionais')
+    # Plot the geometry of the world with gray color
+    fig, ax = plt.subplots(figsize=(10, 6))
+    world_gdf.plot(ax=ax, color='lightgray')
+
+    # Plot the geometry of the world with LogNorm color scale
+    world_gdf[world_gdf['geo_area_nome'] == select1].plot(column='dormidas_totais', cmap='viridis', legend=True, ax=ax, norm=LogNorm(vmin=1, vmax=20000))
+    #Add the names of distritos to portugal
+    # for distrito in world_gdf['Distrito'].unique():
+    #     x = world_gdf[world_gdf['Distrito'] == distrito].unary_union.centroid.x
+    #     y = world_gdf[world_gdf['Distrito'] == distrito].unary_union.centroid.y
+    #     ax.annotate(distrito, xy=(x, y), xytext=(3, 3), textcoords='offset points', fontsize=8, color='black', zorder=3, path_effects=[withStroke(linewidth=4, foreground='w')])
+
+    # Set title and remove axis labels
+    plt.title('Visitantes Residentes Internacionais')
+    plt.gca().patch.set_alpha(0)
+    plt.axis('off')
+    st.pyplot(fig)
+
+# with a2 plot the map for portugal with the selected concelho
+with a2:
+    # add discriptive
+    #st.write('Residentes em Portugal')
+    # Plot the geometry of Portugal with gray color
+    fig, ax = plt.subplots(figsize=(10, 6))
+    portugal_gdf.plot(ax=ax, color='lightgray')
+
+    # Plot the geometry of Viseu with LogNorm color scale
+    portugal_gdf[portugal_gdf['geo_area_nome'] == select1].plot(column='dormidas_totais', cmap='viridis', legend=True, ax=ax, norm=LogNorm(vmin=1, vmax=20000))
+    #Add the names of distritos to portugal
+    # for distrito in portugal_gdf['Distrito'].unique():
+    #     x = portugal_gdf[portugal_gdf['Distrito'] == distrito].unary_union.centroid.x
+    #     y = portugal_gdf[portugal_gdf['Distrito'] == distrito].unary_union.centroid.y
+    #     ax.annotate(distrito, xy=(x, y), xytext=(3, 3), textcoords='offset points', fontsize=8, color='black', zorder=3, path_effects=[withStroke(linewidth=4, foreground='w')])
+
+    # Set title and remove axis labels
+    plt.title('Visitantes Residentes em Portugal')
+    plt.gca().patch.set_alpha(0)
+    plt.axis('off')
+    st.pyplot(fig)
+
+with a3:
+    # add discriptive
+    #st.write('Residentes em Viseu Dão Lafões')
+    # Plot the geometry of Viseu with LogNorm color scale
+    fig, ax = plt.subplots(figsize=(10, 6))
+    vdl_gdf.plot(ax=ax, color='lightgray')
+    vdl_gdf[vdl_gdf['geo_area_nome'] == select1].plot(column='dormidas_totais', cmap='viridis', legend=True, ax=ax, norm=LogNorm(vmin=1, vmax=20000))
+    #Add the names of distritos to portugal
+    # for distrito in vdl_gdf['Distrito'].unique():
+    #     x = vdl_gdf[vdl_gdf['Distrito'] == distrito].unary_union.centroid.x
+    #     y = vdl_gdf[vdl_gdf['Distrito'] == distrito].unary_union.centroid.y
+    #     ax.annotate(distrito, xy=(x, y), xytext=(3, 3), textcoords='offset points', fontsize=8, color='black', zorder=3, path_effects=[withStroke(linewidth=4, foreground='w')])
+
+    # Set title and remove axis labels
+    plt.title('Visitantes Residentes em Viseu Dão Lafões')
+    plt.gca().patch.set_alpha(0)
+    plt.axis('off')
+    st.pyplot(fig)

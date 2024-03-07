@@ -16,6 +16,7 @@ matplotlib = "^3.8.3"
 holidays = "^0.43"
 altair = "^5.2.0"
 plotly-express = "^0.4.1"
+plotly = "^5.19.0"
 
 
 [build-system]
