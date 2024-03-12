@@ -59,16 +59,31 @@ create or replace view estadias_local_seccao as select * from estadias_seccao_m 
 -- Quem dormiu?
 create or replace view quem_dormiu_int_concelho as select pais_origem, geo_area_nome, sum(dormidas_totais) as dormidas_totais from estadias_international_concelho group by pais_origem, geo_area_nome;
 create or replace view quem_dormiu_int_freguesia as select pais_origem, geo_area_nome,  sum(dormidas_totais) as dormidas_totais from estadias_international_freguesia group by pais_origem, geo_area_nome;
+-- grouby para A2
 create or replace view estadias_int_per_concelho as select pais_origem, geo_area_nome, SUM(dormidas_totais) AS dormidas_totais FROM quem_dormiu_int_concelho GROUP BY pais_origem, geo_area_nome ORDER BY dormidas_totais DESC;
 create or replace view estadias_int_por_pais as select pais_origem, sum(dormidas_totais) as dormidas_totais from estadias_international_concelho group by pais_origem;
 
 create or replace view quem_dormiu_nac_concelho as select pais_origem, geo_area_nome, concelho_residencia, distrito_residencia, sum(dormidas_totais) as dormidas_totais from estadias_national_concelho group by pais_origem, geo_area_nome, concelho_residencia, distrito_residencia;
 create or replace view quem_dormiu_nac_freguesia as select pais_origem, geo_area_nome, concelho_residencia, distrito_residencia, sum(dormidas_totais) as dormidas_totais from estadias_national_freguesia group by pais_origem, geo_area_nome, concelho_residencia, distrito_residencia;
-create or replace view estadias_nac_per_concelho as select pais_origem, geo_area_nome, SUM(dormidas_totais) AS dormidas_totais FROM quem_dormiu_nac_concelho GROUP BY pais_origem, geo_area_nome ORDER BY dormidas_totais DESC;
+-- grouby para B2
+create or replace view estadias_nac_per_concelho as select geo_area_nome, distrito_residencia, SUM(dormidas_totais) AS dormidas_totais FROM quem_dormiu_nac_concelho GROUP BY geo_area_nome, distrito_residencia ORDER BY dormidas_totais DESC;
 create or replace view estadias_nac_por_distrito as select distrito_residencia, sum(dormidas_totais) as dormidas_totais from estadias_national_concelho group by distrito_residencia;
 
 create or replace view quem_dormiu_reg_concelho as select pais_origem, geo_area_nome, concelho_residencia, sum(dormidas_totais) as dormidas_totais from estadias_regional_concelho group by pais_origem, geo_area_nome, concelho_residencia;
 create or replace view quem_dormiu_reg_freguesia as select pais_origem, geo_area_nome, concelho_residencia, sum(dormidas_totais) as dormidas_totaiss from estadias_regional_freguesia group by pais_origem, geo_area_nome, concelho_residencia;
 --create or replace view estadias_reg_per_concelho  as select pais_origem, geo_area_nome, SUM(dormidas_totais) AS dormidas_totais FROM quem_dormiu_reg_concelho GROUP BY pais_origem, geo_area_nome ORDER BY dormidas_totais DESC;
+
+-- Quem permaneceu?
+create or replace view quem_permaneceu_int_concelho as select pais_origem, geo_area_nome, sum(total_individuos) as total_individuos from permanencia_internacional_concelho group by pais_origem, geo_area_nome;
+create or replace view quem_permaneceu_int_freguesia as select pais_origem, geo_area_nome, sum(total_individuos) as total_individuos from permanencia_internacional_freguesia group by pais_origem, geo_area_nome;
+-- groupby: Quantidade de internacionais que visitaram VDL
+create or replace view qnt_perm_int_por_concelho as select geo_area_nome, sum(total_individuos) as total_individuos from permanencia_internacional_concelho group by geo_area_nome;
+-- groupby: Quantidade de nacionais que visitaram VDL
+create or replace view qnt_perm_nac_concelho as select geo_area_nome, sum(total_individuos) as total_individuos from permanencia_nacional_concelho group by geo_area_nome;
+-- groupby: Pais que mais visitou VDL
+create or replace view pais_mais_visitou as select pais_origem, sum(total_individuos) as total_individuos from permanencia_internacional_concelho group by pais_origem;
+-- groupby: distrito que mais visitou VDL
+create or replace view distrito_mais_visitou as select distrito_residencia, sum(total_individuos) as total_individuos from permanencia_nacional_concelho group by distrito_residencia;
+
 
 COMMIT;
