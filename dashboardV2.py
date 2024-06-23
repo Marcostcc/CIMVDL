@@ -490,7 +490,7 @@ if select_page == 'Painel de Estadias':
 
         # Create figure and axis objects
         figA2, ax = plt.subplots(figsize=(10, 6))
-        figA2.patch.set_facecolor('#0E1117')
+        #figA2.patch.set_facecolor('#0E1117')
 
         # Plot the bars
         bars1 = ax.bar(r1, total_dormidas_int_pais.dormidas_totais.head(10), color='skyblue', width=bar_width, edgecolor='grey', label='Total de Estadias em VDL')
@@ -527,9 +527,10 @@ if select_page == 'Painel de Estadias':
 
     with b1:
         # add discriptive
-        st.write('Quantidade de dormidas registadas por Turistas Nacionais em' + ' ' + select1)
+        #st.write('Quantidade de dormidas registadas por Turistas Nacionais em' + ' ' + select1)
         # Plot the geometry of Portugal with gray color
         fig2, ax = plt.subplots(figsize=(10, 6))
+        fig2.patch.set_facecolor('#0E1117')
         #fig2.patch.set_facecolor('#0E1117')
         portugal_gdf.plot(ax=ax, color='lightgray')
 
@@ -542,51 +543,52 @@ if select_page == 'Painel de Estadias':
         #     ax.annotate(distrito, xy=(x, y), xytext=(3, 3), textcoords='offset points', fontsize=8, color='black', zorder=3, path_effects=[withStroke(linewidth=4, foreground='w')])
 
         # Set title and remove axis labels
-        plt.title('Mapa de calor dos Turistas Nacionais')
+        #plt.title('Mapa de calor dos Turistas Nacionais')
         ax.patch.set_alpha(0)
         ax.axis('off')
         st.pyplot(fig2)
 
     with b2:
-        st.write('Turistas Nacionais registados em' + ' ' + select1 + ' ' + 'vs Total em Viseu Dão Lafões')
-        bar_width = 0.3
-        #st.write('Turistas Internacionais registados em' + ' ' + select1 + ' ' + 'vs Total em Viseu Dão Lafões')
-        # Get the top 10 countries from total_dormidas_int_pais
-        top_10_distritos = total_dormidas_nac_distrito.head(10)['distrito_residencia']
+        #st.write('Turistas Nacionais registados em' + ' ' + select1 + ' ' + 'vs Total em Viseu Dão Lafões')
+        bar_height = 0.3
 
-        r1 = np.arange(len(total_dormidas_nac_distrito.head(10)))
+        # Get the top 10 districts from total_dormidas_nac_distrito
+        top_10_distritos = total_dormidas_nac_distrito.head(14)['distrito_residencia']
+
+        r1 = np.arange(len(total_dormidas_nac_distrito.head(14)))
 
         # Create an array of indices for the bars representing dormidas for Viseu
-        r2 = [x + bar_width for x in r1]
+        r2 = [y + bar_height for y in r1]
 
-        # Filter total_dormidas_int_concelho for the specific concelho Viseu and top 10 countries
+        # Filter total_dormidas_int_concelho for the specific concelho Viseu and top 10 districts
         filtered_dormidas_concelho = total_dormidas_nac_concelho[(total_dormidas_nac_concelho['geo_area_nome'] == select1) & (total_dormidas_nac_concelho['distrito_residencia'].isin(top_10_distritos))]
 
         # Create figure and axis objects
-        figB2, ax = plt.subplots(figsize=(10, 6))
-        #figB2.patch.set_facecolor('#0E1117')
+        figB2, ax = plt.subplots(figsize=(10, 15))
+        # figB2.patch.set_facecolor('#0E1117')
 
-        # Plot the bars
-        bars1 = ax.bar(r1, total_dormidas_nac_distrito.dormidas_totais.head(10), color='skyblue', width=bar_width, edgecolor='grey', label='Total de Estadias em VDL')
-        bars2 = ax.bar(r2, filtered_dormidas_concelho['dormidas_totais'], color='lightgreen', width=bar_width, edgecolor='grey', label='Estadias em' + ' ' + select1)
+        # Plot the bars horizontally
+        bars1 = ax.barh(r1, total_dormidas_nac_distrito.dormidas_totais.head(14), color='skyblue', height=bar_height, edgecolor='grey', label='Total de Estadias em VDL')
+        bars2 = ax.barh(r2, filtered_dormidas_concelho['dormidas_totais'], color='lightgreen', height=bar_height, edgecolor='grey', label='Estadias em' + ' ' + select1)
 
         # Add labels, title, and legend
-        ax.set_xlabel('País de Origem', fontweight='bold')
-        ax.set_ylabel('Quantidade de Estadias', fontweight='bold')
+        ax.set_ylabel('País de Origem', fontweight='bold')
+        ax.set_xlabel('Quantidade de Estadias', fontweight='bold')
         ax.set_title('Comparação de Estadias totais de Viseu Dão Lafões com apenas'  + ' ' + select1, fontweight='bold')
-        ax.set_xticks([r + bar_width/2 for r in range(len(total_dormidas_nac_distrito.distrito_residencia.head(10)))])
-        ax.set_xticklabels(total_dormidas_nac_distrito.distrito_residencia.head(10))
+        ax.set_yticks([r + bar_height/2 for r in range(len(total_dormidas_nac_distrito.distrito_residencia.head(14)))])
+        ax.set_yticklabels(total_dormidas_nac_distrito.distrito_residencia.head(14))
         ax.legend()
 
-        # Add value labels on top of the bars
+        # Add value labels on the right side of the bars
         for bars in [bars1, bars2]:
             for bar in bars:
-                height = bar.get_height()
-                ax.annotate('{}'.format(height),
-                            xy=(bar.get_x() + bar.get_width() / 2, height),
-                            xytext=(0, 3),  # 3 points vertical offset
+                width = bar.get_width()
+                ax.annotate('{}'.format(width),
+                            xy=(width, bar.get_y() + bar.get_height() / 2),
+                            xytext=(3, 0),  # 3 points horizontal offset
                             textcoords="offset points",
-                            ha='center', va='bottom')
+                            ha='left', va='center')
+
 
         # Show plot
         # Remove the border color of the figure
@@ -601,9 +603,10 @@ if select_page == 'Painel de Estadias':
 
     with c1:
         # add discriptive
-        st.write('Quantidade de dormidas registadas por Turistas de Viseu Dão Lafões em' + ' ' + select1)
+        #st.write('Quantidade de dormidas registadas por Turistas de Viseu Dão Lafões em' + ' ' + select1)
         # Plot the geometry of Viseu with LogNorm color scale
         fig3, ax = plt.subplots(figsize=(10, 6))
+        fig3.patch.set_facecolor('#0E1117')
         #fig3.patch.set_facecolor('#0E1117')
         vdl_gdf.plot(ax=ax, color='lightgray')
         vdl_gdf[vdl_gdf['geo_area_nome'] == select1].plot(column='dormidas_totais', cmap='viridis', legend=True, ax=ax, norm=LogNorm(vmin=1, vmax=20000),legend_kwds={'shrink': 0.3})
@@ -614,7 +617,7 @@ if select_page == 'Painel de Estadias':
         #     ax.annotate(distrito, xy=(x, y), xytext=(3, 3), textcoords='offset points', fontsize=8, color='black', zorder=3, path_effects=[withStroke(linewidth=4, foreground='w')])
 
         # Set title and remove axis labels
-        plt.title('Mapa de calor dos Turistas de Viseu Dão Lafões')
+        #plt.title('Mapa de calor dos Turistas de Viseu Dão Lafões')
         ax.patch.set_alpha(0)
         ax.axis('off')
         st.pyplot(fig3)
